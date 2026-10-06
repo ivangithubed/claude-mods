@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "learningtogether-mods",
+  "description": "Claude Code mods by learningtogetherua: panes and tools for screencasts about working with Claude Code",
+  "owner": {
+    "name": "learningtogetherua",
+    "url": "https://github.com/ivangithubed"
+  },
+  "plugins": [
+    {
+      "name": "trace-map",
+      "source": "./plugins/trace-map",
+      "description": "A pane with a live SVG map of what Claude is doing: the turn's phase, the last tool, the streamed thought, and every file it touched",
+      "category": "productivity",
+      "tags": ["mod", "pane", "visualization", "screencast"]
+    }
+  ]
+}
