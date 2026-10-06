@@ -4,9 +4,9 @@
 
 [English](README.md) · **Українська**
 
-![Панель Trace map](docs/trace-map-screenshot.svg)
+![Панель Trace map у вкладці Code застосунку Claude Desktop](docs/trace-map-screenshot.png)
 
-> Зображення вище — заглушка. Справжній скріншот панелі: `docs/trace-map-screenshot.png` (додати).
+*Панель під час роботи Claude над цим репозиторієм: виклик shell, замаскований під хатню справу, праворуч потік думок, ліворуч карта файлів, унизу смуга активності.*
 
 ## Що малює
 

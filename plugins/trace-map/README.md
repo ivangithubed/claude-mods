@@ -4,9 +4,9 @@ A Claude Code mod that adds a pane beside the transcript and draws, live, what C
 
 **English** · [Українська](README.uk.md)
 
-![The Trace map pane](docs/trace-map-screenshot.svg)
+![The Trace map pane in the Claude Desktop Code tab](docs/trace-map-screenshot.png)
 
-> The image above is a placeholder. A real screenshot of the pane will replace it.
+*The pane while Claude works on this repository: a shell call disguised as a chore, the thought stream on the right, the file map on the left, and the activity strip.*
 
 ## What it draws
 
