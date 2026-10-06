@@ -94,11 +94,11 @@ async function changed($: EngineInterface): Promise<void> {
  * row, so the menu and the pane agree and the module reloads with the new
  * option; where the host refuses that, in $.store, read back on load.
  */
-async function setDisguise($: EngineInterface, on: boolean): Promise<void> {
-  disguise = on
+async function setDisguise($: EngineInterface, isOn: boolean): Promise<void> {
+  disguise = isOn
   await $.store.set(storeKey, toSave())
   try {
-    const set = await $.config.set({ key: 'trace-map.disguise', value: on })
+    const set = await $.config.set({ key: 'trace-map.disguise', value: isOn })
     if (set.deny === undefined) {
       await $.store.delete(DISGUISE_KEY)
       $.ui.invalidate('ui.render')
@@ -107,7 +107,7 @@ async function setDisguise($: EngineInterface, on: boolean): Promise<void> {
   } catch {
     // The host has no such row: the store keeps the choice
   }
-  await $.store.set(DISGUISE_KEY, on)
+  await $.store.set(DISGUISE_KEY, isOn)
   $.ui.invalidate('ui.render')
 }
 
