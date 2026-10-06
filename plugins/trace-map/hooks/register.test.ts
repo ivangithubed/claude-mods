@@ -342,13 +342,17 @@ test('nothing of the prompt or the thought is stored', async ($, on) => {
   }
   await stream.result
   await $.tool.call({ tool: 'Read', tool_use_id: 'r1', file_path: 'C:/proj/src/auth/login.ts' })
+  await $.tool.call({ tool: 'Bash', tool_use_id: 'b1', command: 'git commit -m "hush-hush wording"' })
   await $.turn.complete({ answer: 'done', durationMs: 10, isAborted: false, turnId: 't1', reason: 'answer' })
 
-  // The map's own state is stored, so it survives a reload; the conversation is not
+  // The map's own state is stored, so it survives a reload; the conversation is not,
+  // and neither is the text of a command
   expect(written.length).toBeGreaterThan(0)
   expect(written.join('\n')).toContain('login.ts')
+  expect(written.join('\n')).toContain('"tool":"Bash"')
   expect(written.join('\n')).not.toContain('my private prompt')
   expect(written.join('\n')).not.toContain('a secret plan')
+  expect(written.join('\n')).not.toContain('hush-hush')
   expect(written.join('\n')).not.toContain('"log"')
   await ui.unmount()
 })

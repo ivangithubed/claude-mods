@@ -1,6 +1,6 @@
 # trace-map privacy policy
 
-Last updated: 2026-10-07. Applies to trace-map 0.3.0 and later.
+Last updated: 2026-10-07. Applies to trace-map 0.3.1 and later.
 
 trace-map is a Claude Code mod that draws a pane showing what Claude is doing in the current session. It runs entirely on your machine, inside Claude Code. It has no server, no account and no analytics.
 
@@ -17,10 +17,11 @@ Claude Code also passes the mod the events for the start and end of each turn, w
 ## What it stores, where, and for how long
 
 - **In memory, for the current session:** the last 600 characters of Claude's reasoning. They are never written anywhere and are gone when the turn ends or the session closes.
-- **In Claude Code's local plugin store, on your machine:** the map's state, so the pane survives `/reload-plugins`. That state is the touched file paths, the searched folders and patterns, the order of the last files touched, per-call tool names and success, the count of calls, the turn's phase, and the last tool call with its gist, such as a path or the first line of a command. It is kept under a key for the session and deleted when the session ends.
+- **In Claude Code's local plugin store, on your machine:** the map's state, so the pane survives `/reload-plugins`. That state is the touched file paths, the searched folders and patterns, the order of the last files touched, per-call tool names and success, the count of calls, the turn's phase, and the last tool call's name, kind and short hint, which is a file name or a search pattern. It is kept under a key for the session and deleted when the session ends.
+- **Never stored:** the text of shell commands. The pane shows the last command's first line while the session runs, from memory only.
 - **Your setting:** whether the phrases are on or off, kept in Claude Code's settings or the local plugin store.
 
-The mod keeps no log. It stores no prompt text and no reasoning text.
+The mod keeps no log. It stores no prompt text, no reasoning text and no command text.
 
 ## What it sends
 

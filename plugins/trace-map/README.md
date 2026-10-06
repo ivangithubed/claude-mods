@@ -100,7 +100,7 @@ The mod runs inside Claude Code with your permissions, so here is the full list.
 
 The events for a turn's start and end carry your prompt and Claude's answer. The mod uses them only to know when a turn starts and ends, and does not use or keep their text.
 
-**What it stores:** only the map's state, in Claude Code's plugin store (`$.store`) under a key for the session, so the pane survives `/reload-plugins`. That is the touched file paths, the searched folders and patterns, the order of the last files touched, per-call tool names and success, the number of calls, the turn's phase, and the last tool call with its gist, such as a path or the first line of a command. The session's key is deleted when the session ends. The phrases choice is stored separately. The mod keeps no log and stores no prompt or reasoning text. See [PRIVACY.md](PRIVACY.md).
+**What it stores:** only the map's state, in Claude Code's plugin store (`$.store`) under a key for the session, so the pane survives `/reload-plugins`. That is the touched file paths, the searched folders and patterns, the order of the last files touched, per-call tool names and success, the number of calls, the turn's phase, and the last tool call's name, kind and short hint, which is a file name or a search pattern. The session's key is deleted when the session ends. The phrases choice is stored separately. The mod keeps no log and stores no prompt, reasoning or command text. The honest line shows the last command from memory, so after `/reload-plugins` it shows only the tool's name until the next call. See [PRIVACY.md](PRIVACY.md).
 
 **What it doesn't do:**
 
@@ -145,6 +145,7 @@ Claude Code generates the `.claude-plugin/types/` folder with the mods API types
 
 ## Versions
 
+- **0.3.1**: the text of commands is no longer stored. The honest line keeps it in memory only.
 - **0.3.0**: the log and `/trace-map log` are gone, so the mod no longer keeps any prompt or command history. Adds a privacy policy, support and documentation links, and usage examples.
 - **0.2.0**: Ukrainian chore phrases by kind of call, a button and `/trace-map honest|disguise|log`, the thought stream in the pane, state kept across reloads.
 - **0.1.0**: first version with the phase ring, tool line, radial file map and activity strip.

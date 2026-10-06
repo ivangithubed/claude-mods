@@ -73,11 +73,20 @@ function isSaved(value: unknown): value is Saved {
   )
 }
 
+/**
+ * What the store keeps of the session: the map, and the last tool without its
+ * gist, so no command text is written anywhere. After a reload the honest line
+ * shows the tool alone until the next call.
+ */
+function toSave(): Saved {
+  return { touches, trail, calls, activity, scans, lastTool: lastTool && { ...lastTool, what: '' }, phase }
+}
+
 /** Redraws the pane and saves the session's part of the state. */
 async function changed($: EngineInterface): Promise<void> {
   $.ui.invalidate('ui.render')
   lastRedrawAt = Date.now()
-  await $.store.set(storeKey, { touches, trail, calls, activity, scans, lastTool, phase })
+  await $.store.set(storeKey, toSave())
 }
 
 /**
@@ -87,7 +96,7 @@ async function changed($: EngineInterface): Promise<void> {
  */
 async function setDisguise($: EngineInterface, on: boolean): Promise<void> {
   disguise = on
-  await $.store.set(storeKey, { touches, trail, calls, activity, scans, lastTool, phase })
+  await $.store.set(storeKey, toSave())
   try {
     const set = await $.config.set({ key: 'trace-map.disguise', value: on })
     if (set.deny === undefined) {
