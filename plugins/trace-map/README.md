@@ -1,92 +1,93 @@
 # trace-map
 
-Мод для Claude Code: панель поруч із транскриптом, яка в реальному часі малює, що Claude робить під час ходу. Зроблений для скрінкастів: глядач бачить не стіну логів, а карту.
+A Claude Code mod that adds a pane beside the transcript and draws, live, what Claude is doing during a turn. It was built for screencasts: instead of a wall of logs, viewers watch a map.
 
-*A Claude Code mod: a pane with a live SVG map of the turn — phase ring, last tool, streamed thought, radial file map, activity strip. Built for screencasts.*
+**English** · [Українська](README.uk.md)
 
-![Панель Trace map](docs/trace-map-screenshot.svg)
+![The Trace map pane](docs/trace-map-screenshot.svg)
 
-> Зображення вище — заглушка. Справжній скріншот панелі: `docs/trace-map-screenshot.png` (додати).
+> The image above is a placeholder. A real screenshot of the pane will replace it.
 
-## Що малює
+## What it draws
 
-Одне SVG-зображення, перемальовується на кожну подію. Зверху вниз:
+One SVG image, redrawn on every event. From top to bottom:
 
-- **Кільце фази** і підпис: `idle` (сіре), `thinking` (жовте, дуга крутиться), `using a tool` (блакитне), `answered` (зелена точка).
-- **Рядок дії**: знак статусу (`…` працює, `✓` добре, `✗` помилка), фраза в кольорі інструмента і дрібна підказка (назва файлу або патерн). За умовчанням фраза — побутова справа українською замість сирої команди: `✓ пришиваю ґудзик, відірваний втретє  login.ts`. Для кожного виду виклику свій набір фраз: пошук, читання, правка, запис, shell, видалення, збірка, git, commit, push, pull, тести, нотатка, субагент, web.
-- **Потік думок**: останні рядки міркувань моделі сірим курсивом, поки вона думає.
-- **Карта файлів**: у центрі проєкт, на внутрішньому кільці теки (тека з пошуком — пунктирне бурштинове коло), на зовнішньому файли; точка росте з кожним дотиком, колір від останнього інструмента; між файлами, зачепленими поспіль, сині дуги маршруту.
-- **Смуга активності**: одна риска на виклик інструмента, в його кольорі; помилка — коротша червона. Поруч лічильник `N tool calls`.
-- **Легенда**: `read` синій, `search` бурштиновий, `edit` зелений, `shell` фіолетовий, `agent` рожевий.
-- **Рядок під картинкою**: `N files`, кнопка `clear`, кнопка `✕ фрази` / `✓ фрази`.
+- **Phase ring** and label: `idle` (grey), `thinking` (yellow, the arc turns), `using a tool` (blue), `answered` (green dot).
+- **Action line**: a status mark (`…` running, `✓` done, `✗` error), a phrase in the tool's color, and a small hint such as a file name or a search pattern. By default the phrase is a homely chore in Ukrainian instead of the raw command, for example `✓ пришиваю ґудзик, відірваний втретє  login.ts` ("sewing on a button, torn off for the third time"). Each kind of call has its own set of phrases: search, read, edit, write, shell, delete, build, git, commit, push, pull, tests, notes, subagent and web.
+- **Thought stream**: the last lines of the model's reasoning in grey italics while it thinks.
+- **File map**: the project at the center, folders on the inner ring and files on the outer ring. A folder that was searched is a dashed amber circle. A file's dot grows with every touch and takes the color of the last tool. Blue arcs join files touched one after another.
+- **Activity strip**: one tick per tool call in the tool's color, with errors as short red ticks, next to an `N tool calls` counter.
+- **Legend**: `read` blue, `search` amber, `edit` green, `shell` purple, `agent` pink.
+- **Row under the image**: `N files`, a `clear` button, and a button that turns the phrases off and on.
 
-У терміналі замість SVG малюється текстовий список. Панель відкривається сама на старті сесії.
+In the terminal the pane shows a text list instead of the SVG. The pane opens by itself when a session starts.
 
-## Команди
+## Commands
 
-| Команда | Дія |
+| Command | What it does |
 | :- | :- |
-| `/trace-map` | Відкрити панель |
-| `/trace-map honest` | Показувати інструмент і суть виклику замість фраз |
-| `/trace-map disguise` | Повернути фрази |
-| `/trace-map log` | Хронологія сесії: ходи і виклики, що показувала фраза і що вона приховувала |
-| `/trace-map log last` | Те саме лише для останнього ходу |
+| `/trace-map` | Open the pane |
+| `/trace-map honest` | Show the tool and its gist instead of the phrases |
+| `/trace-map disguise` | Bring the phrases back |
+| `/trace-map log` | The session's timeline: turns and calls, what each phrase showed and what it stood for |
+| `/trace-map log last` | The same, for the last turn only |
 
-Вибір фраз зберігається. Його ж можна змінити в `/plugin` → **Installed** → `trace-map` → **Configure options** (опція **Disguise the last tool**) або в рядку `trace-map.disguise` у `/config`.
+The phrases choice is kept between sessions. You can also change it in `/plugin` → **Installed** → `trace-map` → **Configure options** (the **Disguise the last tool** option), or in the `trace-map.disguise` row of `/config`.
 
-## Установка
+## Install
+
+In a Claude Code session:
 
 ```text
 /plugin marketplace add ivangithubed/claude-mods
 /plugin install trace-map@learningtogether-mods
 ```
 
-З оболонки:
+From your shell:
 
 ```bash
 claude plugin marketplace add ivangithubed/claude-mods
 claude plugin install trace-map@learningtogether-mods
 ```
 
-У відкритій сесії після цього `/reload-plugins`. Перевірка: `/plugin` показує `1 mod active · trace-map`.
+If a session is already open, run `/reload-plugins` there. To check, run `/plugin`: it shows `1 mod active · trace-map`.
 
-Потрібен Claude Code 2.1.287+ у терміналі або Claude Desktop від 2.1.286. Панель малюється в терміналі й у вкладці Code застосунку Claude Desktop; у VS Code, `claude -p` і хмарних сесіях хуки працюють, але нічого не малюється.
+It needs Claude Code 2.1.287 or later in the terminal, or the Claude Desktop app from 2.1.286. The pane is drawn in the terminal and in the Code tab of Claude Desktop. In the VS Code extension, `claude -p` and cloud sessions the hooks run but nothing is drawn.
 
-## Ширина панелі
+## Pane width
 
-Картинка підлаштовується під ширину панелі, але рядок дії з фразою читається повністю не за будь-якої ширини. Проста перевірка: рядок на кшталт `✓ пришиваю ґудзик, відірваний втретє  login.ts` має стояти в один рядок, без `…` у кінці.
+The image adapts to the pane's width, but the action line is only readable in full at some widths. A quick check: a line such as `✓ пришиваю ґудзик, відірваний втретє  login.ts` should fit on one line with no `…` at the end.
 
-| Ширина панелі | Розкладка | Що видно |
+| Pane width | Layout | What you see |
 | :- | :- | :- |
-| менше ~57 колонок (~440 px) | все одне під одним | фраза обрізана |
-| ~60–79 колонок (~470–620 px) | все одне під одним | фраза повністю, підказка з назвою файлу може зникати |
-| **~80–91 колонка (~620–710 px)** | все одне під одним | **фраза й підказка повністю: рекомендовано для вузької панелі** |
-| ~92–149 колонок (~720–1180 px) | карта ліворуч, текст праворуч | права колонка вузька, фраза скорочується |
-| **від ~150 колонок (~1180 px)** | карта ліворуч, текст праворуч | **усе повністю: рекомендовано для широкої панелі** |
+| under ~57 columns (~440 px) | stacked | the phrase is cut |
+| ~60–79 columns (~470–620 px) | stacked | the full phrase; the file hint may drop |
+| **~80–91 columns (~620–710 px)** | stacked | **phrase and hint in full: recommended for a narrow pane** |
+| ~92–149 columns (~720–1180 px) | map left, text right | the right column is narrow and the phrase is shortened |
+| **~150 columns and up (~1180 px)** | map left, text right | **everything in full: recommended for a wide pane** |
 
-Пікселі приблизні: мод рахує 8 px на колонку. Для запису екрана найкраще або вузька панель на 80–91 колонку, або широка від 150.
+Pixels are approximate, since the mod counts 8 px per column. For screen recording, use either a narrow pane of 80–91 columns or a wide one of 150 or more.
 
-## Що мод читає і чого не робить
+## What the mod reads, and what it doesn't do
 
-Мод працює всередині Claude Code з вашими правами, тому ось чесний перелік.
+The mod runs inside Claude Code with your permissions, so here is the full list.
 
-**Читає, поки сесія йде:**
+**What it reads while a session runs:**
 
-- параметри кожного виклику інструмента: шляхи файлів для `Read`/`Edit`/`Write`/`NotebookEdit`, патерн і теку для `Grep`/`Glob`, перший рядок команди для `Bash`/`PowerShell` (з нього ж вибирає токени, схожі на імена файлів), опис для `Agent`;
-- текст міркувань моделі (`thinking`) у міру того, як він надходить, лише для головного агента; у пам'яті тримаються останні 600 символів;
-- робочу теку сесії, її id, тему з `/config`.
+- the input of every tool call: the file path for `Read`, `Edit`, `Write` and `NotebookEdit`; the pattern and folder for `Grep` and `Glob`; the first line of the command for `Bash` and `PowerShell`, from which it also picks the tokens that look like file names; the description for `Agent`;
+- the model's reasoning (`thinking`) as it streams, for the main agent only; it keeps the last 600 characters in memory;
+- the session's working folder, its id, and the theme from `/config`;
+- the text of your prompt at the start of each turn: its first 60 characters go into the log.
 
-- текст вашого промпта на початку кожного ходу: перші 60 символів ідуть у лог.
+**What it stores:** the map's state (files, trail, counters) and the log for `/trace-map log`, in Claude Code's plugin store (`$.store`) under a key for the session, so they survive `/reload-plugins`. The log holds up to 400 lines: the time and the first 60 characters of the prompt at the start of each turn, and for each call its time, duration, phrase and the first 60 characters of its gist (a path, a pattern or a command). The session's key is deleted when the session ends. The phrases choice is stored separately.
 
-**Зберігає:** стан карти (файли, маршрут, лічильники) і лог для `/trace-map log` у сховищі плагінів Claude Code (`$.store`) під ключем своєї сесії, щоб пережити `/reload-plugins`. Лог — до 400 рядків: час і перші 60 символів промпта на початку ходу, а для кожного виклику час, тривалість, фраза і перші 60 символів суті (шлях, патерн або команда). Ключ сесії видаляється, коли сесія закінчується. Окремо зберігається вибір «фрази/чесно».
+**What it doesn't do:**
 
-**Не робить:**
+- it makes no network requests, calls no model and starts no processes;
+- it reads and writes no files on disk: none of the `calls:` below touch files or the network;
+- it changes no tool calls, prompts or permissions: every hook passes its event on unchanged.
 
-- не ходить у мережу, не викликає модель, не запускає процесів;
-- не читає і не пише файлів на диску (жоден із `calls:` нижче не є файловим чи мережевим);
-- не змінює виклики інструментів, промпти чи дозволи: кожен хук передає подію далі без змін.
-
-Повний перелік подій і викликів API — те, що друкує `claude plugin validate` для цієї теки:
+The full list of events and API calls is what `claude plugin validate` prints for this folder:
 
 ```text
 Validating plugin manifest: .../plugins/trace-map/.claude-plugin/plugin.json
@@ -99,32 +100,32 @@ Validating hooks: .../plugins/trace-map/hooks/hooks.json
 ✔ Validation passed
 ```
 
-## Розробка
+## Development
 
 ```bash
 claude plugin validate ./plugins/trace-map
 claude plugin test ./plugins/trace-map
 ```
 
-Тестів 14, у `hooks/register.test.ts`. Файли:
+There are 14 tests in `hooks/register.test.ts`. The files:
 
 ```text
-.claude-plugin/plugin.json   маніфест, опція userConfig `disguise`
-hooks/hooks.json             вказує на модуль хуків
-hooks/register.tsx           хуки та малювання
-hooks/disguise.ts            фрази-маскування і класифікація викликів
-hooks/register.test.ts       тести
-types/index.d.ts             спільні типи
-docs/                        бриф для звукового дизайну, зразок логу
+.claude-plugin/plugin.json   manifest, with the `disguise` userConfig option
+hooks/hooks.json             points to the hooks module
+hooks/register.tsx           the hooks and the drawing
+hooks/disguise.ts            the phrases and how calls are classified
+hooks/register.test.ts       tests
+types/index.d.ts             shared types
+docs/                        a sound design brief and a sample log, in Ukrainian
 ```
 
-Теку `.claude-plugin/types/` (типи API модів) генерує сам Claude Code; вона в `.gitignore`.
+Claude Code generates the `.claude-plugin/types/` folder with the mods API types, and it is in `.gitignore`.
 
-## Версії
+## Versions
 
-- **0.2.0** — фрази-маскування українською за видом виклику, кнопка і `/trace-map honest|disguise|log`, потік думок у панелі, збереження стану через reload.
-- **0.1.0** — перша версія: кільце фази, рядок інструмента, радіальна карта файлів, смуга активності.
+- **0.2.0**: Ukrainian chore phrases by kind of call, a button and `/trace-map honest|disguise|log`, the thought stream in the pane, state kept across reloads.
+- **0.1.0**: first version with the phase ring, tool line, radial file map and activity strip.
 
-## Ліцензія
+## License
 
 [MIT](../../LICENSE) © 2026 learningtogetherua
