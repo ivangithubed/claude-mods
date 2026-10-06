@@ -1,12 +1,15 @@
 {
   "name": "trace-map",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A pane that shows live what Claude is doing: the turn's phase, the last tool, and every file it touched",
   "author": { "name": "learningtogetherua", "url": "https://github.com/ivangithubed" },
   "homepage": "https://github.com/ivangithubed/claude-mods/tree/main/plugins/trace-map",
   "repository": "https://github.com/ivangithubed/claude-mods",
   "license": "MIT",
   "keywords": ["mod", "pane", "visualization", "screencast", "trace"],
+  "documentationUrl": "https://github.com/ivangithubed/claude-mods/blob/main/plugins/trace-map/README.md",
+  "supportUrl": "https://github.com/ivangithubed/claude-mods/issues",
+  "privacyPolicyUrl": "https://github.com/ivangithubed/claude-mods/blob/main/plugins/trace-map/PRIVACY.md",
   "userConfig": {
     "disguise": {
       "type": "boolean",

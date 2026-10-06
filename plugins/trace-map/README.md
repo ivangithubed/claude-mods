@@ -29,10 +29,30 @@ In the terminal the pane shows a text list instead of the SVG. The pane opens by
 | `/trace-map` | Open the pane |
 | `/trace-map honest` | Show the tool and its gist instead of the phrases |
 | `/trace-map disguise` | Bring the phrases back |
-| `/trace-map log` | The session's timeline: turns and calls, what each phrase showed and what it stood for |
-| `/trace-map log last` | The same, for the last turn only |
 
 The phrases choice is kept between sessions. You can also change it in `/plugin` → **Installed** → `trace-map` → **Configure options** (the **Disguise the last tool** option), or in the `trace-map.disguise` row of `/config`.
+
+## Examples
+
+**1. Record a screencast of Claude at work.** Open the pane at one of the [recommended widths](#pane-width) and start recording. Keep the phrases on for a light tone, or run `/trace-map honest` for a technical audience. A prompt that makes a good recording:
+
+```text
+Audit src/ for tech debt and write the findings to TECH-DEBT.md, worst first.
+```
+
+Viewers see the searches fan out as dashed rings, the files light up as Claude reads them, and the edit to `TECH-DEBT.md` turn green at the end.
+
+**2. Watch a large exploration as it happens.** In a big or unfamiliar repository, the map shows which folders Claude searched, which files it read, and where it keeps coming back, since a dot grows with every touch. If it wanders into the wrong part of the code, you can stop it early and point it elsewhere. For example:
+
+```text
+Find where the session token is refreshed and explain the flow end to end.
+```
+
+**3. Check a change before you review it.** Press `clear` before the task so the map shows that task alone. When Claude answers, a file's dot has the color of the last tool that touched it: blue for read, green for edited, purple for a shell command. A green file in a folder you didn't expect is the first place to look. Run `/trace-map honest` to see the last tool call as it really was. For example:
+
+```text
+Rename the userId field to accountId across the API layer and update its tests.
+```
 
 ## Install
 
@@ -75,11 +95,12 @@ The mod runs inside Claude Code with your permissions, so here is the full list.
 **What it reads while a session runs:**
 
 - the input of every tool call: the file path for `Read`, `Edit`, `Write` and `NotebookEdit`; the pattern and folder for `Grep` and `Glob`; the first line of the command for `Bash` and `PowerShell`, from which it also picks the tokens that look like file names; the description for `Agent`;
-- the model's reasoning (`thinking`) as it streams, for the main agent only; it keeps the last 600 characters in memory;
-- the session's working folder, its id, and the theme from `/config`;
-- the text of your prompt at the start of each turn: its first 60 characters go into the log.
+- the model's reasoning (`thinking`) as it streams, for the main agent only; it keeps the last 600 characters in memory and never stores them;
+- the session's working folder, its id, and the theme from `/config`.
 
-**What it stores:** the map's state (files, trail, counters) and the log for `/trace-map log`, in Claude Code's plugin store (`$.store`) under a key for the session, so they survive `/reload-plugins`. The log holds up to 400 lines: the time and the first 60 characters of the prompt at the start of each turn, and for each call its time, duration, phrase and the first 60 characters of its gist (a path, a pattern or a command). The session's key is deleted when the session ends. The phrases choice is stored separately.
+The events for a turn's start and end carry your prompt and Claude's answer. The mod uses them only to know when a turn starts and ends, and does not use or keep their text.
+
+**What it stores:** only the map's state, in Claude Code's plugin store (`$.store`) under a key for the session, so the pane survives `/reload-plugins`. That is the touched file paths, the searched folders and patterns, the order of the last files touched, per-call tool names and success, the number of calls, the turn's phase, and the last tool call with its gist, such as a path or the first line of a command. The session's key is deleted when the session ends. The phrases choice is stored separately. The mod keeps no log and stores no prompt or reasoning text. See [PRIVACY.md](PRIVACY.md).
 
 **What it doesn't do:**
 
@@ -107,7 +128,7 @@ claude plugin validate ./plugins/trace-map
 claude plugin test ./plugins/trace-map
 ```
 
-There are 14 tests in `hooks/register.test.ts`. The files:
+There are 15 tests in `hooks/register.test.ts`. One of them checks that no prompt or reasoning text reaches the store. The files:
 
 ```text
 .claude-plugin/plugin.json   manifest, with the `disguise` userConfig option
@@ -116,15 +137,21 @@ hooks/register.tsx           the hooks and the drawing
 hooks/disguise.ts            the phrases and how calls are classified
 hooks/register.test.ts       tests
 types/index.d.ts             shared types
-docs/                        a sound design brief and a sample log, in Ukrainian
+docs/                        the screenshot and a sound design brief in Ukrainian
+PRIVACY.md                   what the mod reads, stores and sends
 ```
 
 Claude Code generates the `.claude-plugin/types/` folder with the mods API types, and it is in `.gitignore`.
 
 ## Versions
 
+- **0.3.0**: the log and `/trace-map log` are gone, so the mod no longer keeps any prompt or command history. Adds a privacy policy, support and documentation links, and usage examples.
 - **0.2.0**: Ukrainian chore phrases by kind of call, a button and `/trace-map honest|disguise|log`, the thought stream in the pane, state kept across reloads.
 - **0.1.0**: first version with the phase ring, tool line, radial file map and activity strip.
+
+## Support
+
+Questions, bugs and ideas: [GitHub Issues](https://github.com/ivangithubed/claude-mods/issues). If the pane doesn't appear, check the Claude Code version, run `/plugin` to see whether the mod is listed as active, and run `/trace-map` to open the pane by hand.
 
 ## License
 

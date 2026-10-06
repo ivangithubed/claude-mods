@@ -11,23 +11,6 @@ const PANE = 'trace-map'
 // /config row when the host lets a plugin set its own row, else in $.store.
 let disguise = true
 const DISGUISE_KEY = 'trace-map:disguise'
-// Enough log for a whole recording session: every call, plus a line per turn's start and end
-const LOG_LENGTH = 400
-
-/** The wall clock as `HH:MM:SS`, local time, for the log. */
-function clock(at: number): string {
-  const d = new Date(at)
-  const two = (n: number) => String(n).padStart(2, '0')
-  return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`
-}
-
-/** A duration for the log: `0.4s`, `12.8s`, `1m05s`. */
-function span(ms: number): string {
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
-  const m = Math.floor(ms / 60_000)
-  const s = Math.round((ms % 60_000) / 1000)
-  return `${m}m${String(s).padStart(2, '0')}s`
-}
 
 // $.store is shared by every session on the machine, so each session saves
 // under its own key: a new session starts clean, a hot reload within one
@@ -65,18 +48,15 @@ let lastRedrawAt = 0
 
 type Activity = { tool: string; isError: boolean }
 type Scan = { dir: string; pattern: string; count: number }
-// One line per tool call and per turn's edge, for `/trace-map log`: when, how
-// long, what the disguise showed and what it hid
-let log: string[] = []
-let turnStartedAt = 0
 
+// Nothing of the conversation is kept beyond what the pane draws: no log, no
+// prompt text, and the thought only in memory
 type Saved = {
   touches: Touch[]
   trail: string[]
   calls: number
   activity: Activity[]
   scans: Scan[]
-  log?: string[]
   lastTool?: LastTool | null
   phase?: Phase
 }
@@ -97,7 +77,7 @@ function isSaved(value: unknown): value is Saved {
 async function changed($: EngineInterface): Promise<void> {
   $.ui.invalidate('ui.render')
   lastRedrawAt = Date.now()
-  await $.store.set(storeKey, { touches, trail, calls, activity, scans, log, lastTool, phase })
+  await $.store.set(storeKey, { touches, trail, calls, activity, scans, lastTool, phase })
 }
 
 /**
@@ -107,7 +87,7 @@ async function changed($: EngineInterface): Promise<void> {
  */
 async function setDisguise($: EngineInterface, on: boolean): Promise<void> {
   disguise = on
-  await $.store.set(storeKey, { touches, trail, calls, activity, scans, log, lastTool, phase })
+  await $.store.set(storeKey, { touches, trail, calls, activity, scans, lastTool, phase })
   try {
     const set = await $.config.set({ key: 'trace-map.disguise', value: on })
     if (set.deny === undefined) {
@@ -626,7 +606,6 @@ export const register: Register = (on, options) => {
       calls = saved.calls
       activity = saved.activity
       scans = saved.scans
-      log = saved.log ?? []
       lastTool = saved.lastTool ?? null
       phase = saved.phase ?? 'idle'
     }
@@ -650,16 +629,9 @@ export const register: Register = (on, options) => {
   })
 
   // `/trace-map` opens the pane; `/trace-map honest` and `/trace-map disguise`
-  // flip the line; `/trace-map log` lists the last calls as the pane showed them
+  // flip the line
   on('command.run', { command: 'trace-map' }, async ($, e) => {
     const arg = e.args.trim().toLowerCase()
-    if (arg === 'log' || arg === 'log last') {
-      if (log.length === 0) return { text: 'No tool calls yet.' }
-      // `log last`: from the last turn's `── thinking` line on, the turn just answered
-      const lastTurn = log.map(line => line.startsWith('── ') && line.includes(' thinking · ')).lastIndexOf(true)
-      const lines = arg === 'log last' && lastTurn >= 0 ? log.slice(lastTurn) : log
-      return { text: lines.join('\n') }
-    }
     if (arg === 'honest' || arg === 'disguise') {
       await setDisguise($, arg === 'disguise')
       return { text: arg === 'disguise' ? 'Trace map: the chores are back on.' : 'Trace map: showing the honest tool line.' }
@@ -671,9 +643,6 @@ export const register: Register = (on, options) => {
   on('turn.start', async ($, e, next) => {
     phase = 'thinking'
     thought = ''
-    // A turn's edges go in the log too, so it reads as a timeline: `── 14:03:21 thinking`
-    turnStartedAt = Date.now()
-    log = [...log, `── ${clock(turnStartedAt)} thinking · ${head(e.text.replace(/\s+/g, ' '), 60)}`].slice(-LOG_LENGTH)
     await changed($)
     return next(e)
   })
@@ -682,8 +651,6 @@ export const register: Register = (on, options) => {
   on('turn.complete', async ($, e, next) => {
     if (e.agentId === undefined) {
       phase = 'done'
-      const now = Date.now()
-      log = [...log, `── ${clock(now)} answered · turn ${span(now - turnStartedAt)}`].slice(-LOG_LENGTH)
       await changed($)
     }
     return next(e)
@@ -738,20 +705,11 @@ export const register: Register = (on, options) => {
     if (SHELL_TOOLS.has(e.tool)) for (const path of pathsInCommand(str(input, 'command'))) touch(path, e.tool)
     await changed($)
 
-    const startedAt = Date.now()
     const ran = await next(e)
-    const took = Date.now() - startedAt
 
     const isError = ran.deny !== undefined || ran.isError === true
     if (lastTool === started) lastTool = { ...started, isDone: true, isError }
     activity = [...activity, { tool: e.tool, isError }].slice(-ACTIVITY_LENGTH)
-    // The log keeps when the call began, how long it took, and what the chore stood for:
-    // `#12 14:03:27 +0.4s ✓ git · переглядаю старі фото · Bash git status`
-    const shown = `${phraseOf(started.kind, started.callNo)}${started.hint ? ' ' + started.hint : ''}`
-    log = [
-      ...log,
-      `#${started.callNo} ${clock(startedAt)} +${span(took)} ${isError ? '✗' : '✓'} ${started.kind} · ${shown} · ${e.tool} ${head(started.what, 60)}`,
-    ].slice(-LOG_LENGTH)
     if (e.agentId === undefined) phase = 'thinking'
     await changed($)
     return ran
@@ -768,7 +726,6 @@ export const register: Register = (on, options) => {
       activity = []
       scans = []
       thought = ''
-      log = []
       await changed($)
     }
     // The pane's own switch: ✕ turns the chores off, ✓ turns them back on

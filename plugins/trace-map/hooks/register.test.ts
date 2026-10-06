@@ -286,7 +286,7 @@ test('the pane has its own switch: ✕ turns the chores off, ✓ turns them back
   }
 })
 
-test('/trace-map honest and /trace-map disguise flip the line, /trace-map log lists the calls', async ($, on) => {
+test('/trace-map honest and /trace-map disguise flip the line', async ($, on) => {
   mock.store(on)
   on('tool.call', async () => OK)
 
@@ -299,18 +299,6 @@ test('/trace-map honest and /trace-map disguise flip the line, /trace-map log li
   await $.tool.call({ tool: 'Bash', tool_use_id: 'b1', command: "cat >> TECH-DEBT.md <<'EOF'\n- fix it\nEOF" })
   await $.turn.complete({ answer: 'done', durationMs: 10, isAborted: false, turnId: 't1', reason: 'answer' })
 
-  // A timeline: the turn's edges with the clock, each call with the clock and how long it took
-  const log = await $.command.run({ command: 'trace-map', args: 'log', ...RUN })
-  const lines = String(log.text).split('\n')
-  expect(lines).toHaveLength(4)
-  const CLOCK = '\\d\\d:\\d\\d:\\d\\d'
-  const SPAN = '(\\d+\\.\\ds|\\d+m\\d\\ds)'
-  expect(lines[0]).toMatch(new RegExp(`^── ${CLOCK} thinking · note the debt$`))
-  expect(lines[1]).toMatch(new RegExp(`^#\\d+ ${CLOCK} \\+${SPAN} ✓ read · (${PHRASES.read.join('|')}) login\\.ts · Read C:/proj/src/auth/login\\.ts$`))
-  expect(lines[2]).toMatch(new RegExp(`^#\\d+ ${CLOCK} \\+${SPAN} ✓ note · (${PHRASES.note.join('|')}) TECH-DEBT\\.md · Bash cat >> TECH-DEBT\\.md`))
-  expect(lines[3]).toMatch(new RegExp(`^── ${CLOCK} answered · turn ${SPAN}$`))
-
-
   const honest = await $.command.run({ command: 'trace-map', args: 'honest', ...RUN })
   expect(honest.text).toContain('honest')
   expect(await ui.find({ type: 'Text', text: /^✓ Bash$/ })).toBeDefined()
@@ -319,16 +307,49 @@ test('/trace-map honest and /trace-map disguise flip the line, /trace-map log li
   const back = await $.command.run({ command: 'trace-map', args: 'disguise', ...RUN })
   expect(back.text).toContain('chores')
   expect(await ui.find({ type: 'Text', text: anyPhrase('done') })).toBeDefined()
+  await ui.unmount()
+})
 
-  // A second turn; `log last` shows only it
-  await $.turn.start({ text: 'and again', turnId: 't2' })
-  await $.tool.call({ tool: 'Read', tool_use_id: 'r2', file_path: 'C:/proj/src/auth/session.ts' })
-  await $.turn.complete({ answer: 'done', durationMs: 10, isAborted: false, turnId: 't2', reason: 'answer' })
-  const last = String((await $.command.run({ command: 'trace-map', args: 'log last', ...RUN })).text).split('\n')
-  expect(last).toHaveLength(3)
-  expect(last[0]).toMatch(/^── \d\d:\d\d:\d\d thinking · and again$/)
-  expect(last[1]).toContain('session.ts')
-  expect(String((await $.command.run({ command: 'trace-map', args: 'log', ...RUN })).text).split('\n')).toHaveLength(7)
+test('nothing of the prompt or the thought is stored', async ($, on) => {
+  // A store in memory that records every value written to it
+  const kept = new Map<string, unknown>()
+  const written: string[] = []
+  on('store.get', async (_, e) => ({ value: kept.get(e.key) }))
+  on('store.set', async (_, e) => {
+    kept.set(e.key, e.value)
+    written.push(JSON.stringify(e.value))
+    return { value: undefined }
+  })
+  on('store.delete', async (_, e) => {
+    kept.delete(e.key)
+    return { value: undefined }
+  })
+  on('store.keys', async () => ({ value: [...kept.keys()] }))
+  on('tool.call', async () => OK)
+  on('turn.start', async (_, e) => ({ turnId: e.turnId }))
+  on('turn.complete', async (_, e) => ({ text: e.answer }))
+  on('turn.step', async function* (_, e) {
+    yield { kind: 'thinking', index: 0, text: 'a secret plan' }
+    yield { kind: 'stop', stopReason: 'end_turn', usage: null }
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn', usage: null }
+  })
+
+  const ui = await $.ui.mount({ plugin: 'trace-map', surface: 'desktop', ...PANE })
+  await $.turn.start({ text: 'my private prompt', turnId: 't1' })
+  const stream = $.turn.step({ turnId: 't1', index: 0, model: 'test', messageCount: 1 })
+  for await (const _chunk of stream) {
+    // read to the end
+  }
+  await stream.result
+  await $.tool.call({ tool: 'Read', tool_use_id: 'r1', file_path: 'C:/proj/src/auth/login.ts' })
+  await $.turn.complete({ answer: 'done', durationMs: 10, isAborted: false, turnId: 't1', reason: 'answer' })
+
+  // The map's own state is stored, so it survives a reload; the conversation is not
+  expect(written.length).toBeGreaterThan(0)
+  expect(written.join('\n')).toContain('login.ts')
+  expect(written.join('\n')).not.toContain('my private prompt')
+  expect(written.join('\n')).not.toContain('a secret plan')
+  expect(written.join('\n')).not.toContain('"log"')
   await ui.unmount()
 })
 
