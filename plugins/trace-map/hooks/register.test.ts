@@ -95,15 +95,15 @@ test('a shell command touches the files it names, and a Grep over one file touch
   await $.tool.call({
     tool: 'Bash',
     tool_use_id: 'b1',
-    command: "awk 'NR>160 && /#[0-9a-f]{3,8}/ {print NR\": \"$0}' src/ui/timeline.css | head -30; cat README.md",
+    command: "awk 'NR>160 && /#[0-9a-f]{3,8}/ {print NR\": \"$0}' src/ui/theme.css | head -30; cat README.md",
   })
-  await $.tool.call({ tool: 'Grep', tool_use_id: 'g1', pattern: '^#', path: 'D:/proj/research/design-passport.md' })
+  await $.tool.call({ tool: 'Grep', tool_use_id: 'g1', pattern: '^#', path: 'D:/proj/research/brand-guidebook.md' })
 
   const source = String((await ui.find({ type: 'Svg' }))?.props.source)
   // Labels are cut to 16 characters, so the long name is matched by its head
-  expect(source).toContain('timeline.css')
+  expect(source).toContain('theme.css')
   expect(source).toContain('README.md')
-  expect(source).toContain('design-passport')
+  expect(source).toContain('brand-guidebook')
   // Neither the awk program nor the Grep over a file is a directory scan
   expect(source).not.toContain('stroke-dasharray="3 2"')
   await ui.unmount()
