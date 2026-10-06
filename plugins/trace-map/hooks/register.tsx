@@ -473,14 +473,17 @@ function svg(W: number, H: number): string {
   const f1 = (n: number) => n.toFixed(1)
 
   // Labels keep clear of each other: a label whose box meets a placed one is left out
-  const boxes: { x: number; y: number; w: number; h: number }[] = []
+  // The JSX factory's one-letter name is reserved in a .tsx file, so the boxes spell out width and height
+  const boxes: { x: number; y: number; width: number; height: number }[] = []
   const labelPx = Number(labelFont)
   const fits = (x: number, y: number, chars: number, anchor: 'start' | 'end' | 'middle'): boolean => {
-    const w = chars * labelPx * 0.58
-    const h = labelPx * 1.2
-    const left = anchor === 'start' ? x : anchor === 'end' ? x - w : x - w / 2
-    const box = { x: left, y: y - h, w, h }
-    const clear = boxes.every(b => box.x + box.w < b.x || b.x + b.w < box.x || box.y + box.h < b.y || b.y + b.h < box.y)
+    const width = chars * labelPx * 0.58
+    const height = labelPx * 1.2
+    const left = anchor === 'start' ? x : anchor === 'end' ? x - width : x - width / 2
+    const box = { x: left, y: y - height, width, height }
+    const clear = boxes.every(
+      b => box.x + box.width < b.x || b.x + b.width < box.x || box.y + box.height < b.y || b.y + b.height < box.y,
+    )
     if (clear) boxes.push(box)
     return clear
   }

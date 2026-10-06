@@ -1,6 +1,6 @@
 {
   "name": "trace-map",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A pane that shows live what Claude is doing: the turn's phase, the last tool, and every file it touched",
   "author": { "name": "learningtogetherua", "url": "https://github.com/ivangithubed" },
   "homepage": "https://github.com/ivangithubed/claude-mods/tree/main/plugins/trace-map",

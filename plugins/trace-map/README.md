@@ -147,7 +147,8 @@ Claude Code generates the `.claude-plugin/types/` folder with the mods API types
 
 ## Versions
 
-- **0.3.2**: a listing icon, and the README says which setting the mod changes. A code cleanup lets the directory's scanner follow the mod.
+- **0.3.3**: a local variable no longer reuses the name of the JSX factory, so the directory's scanner can read the mod.
+- **0.3.2**: a listing icon, and the README says which setting the mod changes.
 - **0.3.1**: the text of commands is no longer stored. The honest line keeps it in memory only.
 - **0.3.0**: the log and `/trace-map log` are gone, so the mod no longer keeps any prompt or command history. Adds a privacy policy, support and documentation links, and usage examples.
 - **0.2.0**: Ukrainian chore phrases by kind of call, a button and `/trace-map honest|disguise|log`, the thought stream in the pane, state kept across reloads.
