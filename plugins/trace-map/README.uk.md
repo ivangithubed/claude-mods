@@ -4,7 +4,7 @@
 
 [English](README.md) · **Українська**
 
-![Панель Trace map у вкладці Code застосунку Claude Desktop](docs/trace-map-screenshot.png)
+![Панель Trace map у вкладці Code застосунку Claude Desktop](https://raw.githubusercontent.com/ivangithubed/claude-mods/main/docs/trace-map-screenshot.png)
 
 *Панель під час роботи Claude над цим репозиторієм: виклик shell, замаскований під хатню справу, праворуч потік думок, ліворуч карта файлів, унизу смуга активності.*
 
@@ -100,7 +100,7 @@ claude plugin install trace-map@learningtogether-mods
 
 **Зберігає:** лише стан карти у сховищі плагінів Claude Code (`$.store`) під ключем своєї сесії, щоб панель пережила `/reload-plugins`. Це шляхи зачеплених файлів, обшукані теки й патерни, порядок останніх файлів, назви інструментів і успіх кожного виклику, кількість викликів, фаза ходу та назва, вид і коротка підказка останнього виклику: назва файлу або патерн пошуку. Ключ сесії видаляється, коли сесія закінчується. Окремо зберігається вибір «фрази/чесно». Логу немає, текст промптів, міркувань і команд не зберігається. Чесний рядок показує останню команду з пам'яті, тож після `/reload-plugins` у ньому до наступного виклику буде лише назва інструмента. Докладніше: [PRIVACY.md](PRIVACY.md), англійською.
 
-**Що змінює:** одне власне налаштування. Коли ви вмикаєте чи вимикаєте фрази, мод записує свою опцію `trace-map.disguise`, той самий рядок, що видно в `/config`, через `$.config.set`. Інших налаштувань і змінних оточення він не змінює. Ще мод перехоплює зміну налаштування `theme` (`config.set{key=theme}`) лише для того, щоб перемалювати панель у відповідних кольорах, і передає кожну зміну далі без змін.
+**Що змінює:** ні налаштувань, ні змінних оточення. Коли ви вмикаєте чи вимикаєте фрази кнопкою чи командою, вибір іде у власне сховище мода, а не в налаштування Claude Code. Якщо потім змінити опцію `disguise` у `/config`, ця зміна переважить кнопку. Ще мод перехоплює зміну налаштування `theme` (`config.set{key=theme}`) лише для того, щоб перемалювати панель у відповідних кольорах, і передає кожну зміну далі без змін.
 
 **Не робить:**
 
@@ -116,7 +116,7 @@ Validating plugin manifest: .../plugins/trace-map/.claude-plugin/plugin.json
 Validating hooks: .../plugins/trace-map/hooks/hooks.json
 
   ❯ ./register.tsx hooks: session.start, session.end, config.set{key=theme}, command.run{command=trace-map}, turn.start, turn.complete, turn.step, tool.call, ui.render{component=Pane, requestId=trace-map}
-  ❯ ./register.tsx calls: $.command.register, $.config.list (via readTheme), $.config.set (via setDisguise), $.session.id, $.store.delete, $.store.get, $.store.set (via changed, setDisguise), $.ui.invalidate, $.ui.open, $.ui.resolve
+  ❯ ./register.tsx calls: $.command.register, $.config.list (via readTheme), $.session.id, $.store.delete, $.store.get, $.store.set (via changed, setDisguise), $.ui.invalidate, $.ui.open, $.ui.resolve
 
 ✔ Validation passed
 ```
@@ -128,7 +128,7 @@ claude plugin validate ./plugins/trace-map
 claude plugin test ./plugins/trace-map
 ```
 
-Тестів 15, у `hooks/register.test.ts`. Один із них перевіряє, що текст промпта й міркувань не потрапляє у сховище. Файли:
+Тестів 18, у `hooks/register.test.ts`. Один із них перевіряє, що текст промпта й міркувань не потрапляє у сховище. Файли:
 
 ```text
 .claude-plugin/plugin.json   маніфест, опція userConfig `disguise`
@@ -137,7 +137,7 @@ hooks/register.tsx           хуки та малювання
 hooks/disguise.ts            фрази-маскування і класифікація викликів
 hooks/register.test.ts       тести
 types/index.d.ts             спільні типи
-docs/                        скріншот і бриф для звукового дизайну
+docs/                        бриф для звукового дизайну
 PRIVACY.md                   що мод читає, зберігає і надсилає
 ```
 
@@ -145,6 +145,7 @@ PRIVACY.md                   що мод читає, зберігає і над�
 
 ## Версії
 
+- **0.3.4** — кнопка фраз тримає вибір у власному сховищі мода і більше не пише в налаштування Claude Code; пізніша зміна в `/config` її перекриває. Скріншот винесено з теки плагіна.
 - **0.3.3** — локальна змінна більше не займає ім'я фабрики JSX, тож сканер каталогу може прочитати мод.
 - **0.3.2** — іконка для лістингу, README пояснює, яке налаштування змінює мод.
 - **0.3.1** — текст команд більше не зберігається. Чесний рядок тримає його лише в пам'яті.

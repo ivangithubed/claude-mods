@@ -4,7 +4,7 @@ A Claude Code mod that adds a pane beside the transcript and draws, live, what C
 
 **English** · [Українська](README.uk.md)
 
-![The Trace map pane in the Claude Desktop Code tab](docs/trace-map-screenshot.png)
+![The Trace map pane in the Claude Desktop Code tab](https://raw.githubusercontent.com/ivangithubed/claude-mods/main/docs/trace-map-screenshot.png)
 
 *The pane while Claude works on this repository: a shell call disguised as a chore, the thought stream on the right, the file map on the left, and the activity strip.*
 
@@ -102,7 +102,7 @@ The events for a turn's start and end carry your prompt and Claude's answer. The
 
 **What it stores:** only the map's state, in Claude Code's plugin store (`$.store`) under a key for the session, so the pane survives `/reload-plugins`. That is the touched file paths, the searched folders and patterns, the order of the last files touched, per-call tool names and success, the number of calls, the turn's phase, and the last tool call's name, kind and short hint, which is a file name or a search pattern. The session's key is deleted when the session ends. The phrases choice is stored separately. The mod keeps no log and stores no prompt, reasoning or command text. The honest line shows the last command from memory, so after `/reload-plugins` it shows only the tool's name until the next call. See [PRIVACY.md](PRIVACY.md).
 
-**What it changes:** one setting of its own. When you turn the phrases on or off, the mod writes its own `trace-map.disguise` option, the row you also see in `/config`, with `$.config.set`. It changes no other setting and no environment variables. It also hooks changes to the `theme` setting (`config.set{key=theme}`) only to redraw the pane in matching colors, and passes each change on unchanged.
+**What it changes:** no settings and no environment variables. When you turn the phrases on or off with the button or a command, the choice goes into the mod's own store, not into Claude Code's settings. If you later change the `disguise` option in `/config`, that change wins over the button. The mod also hooks changes to the `theme` setting (`config.set{key=theme}`) only to redraw the pane in matching colors, and passes each change on unchanged.
 
 **What it doesn't do:**
 
@@ -118,7 +118,7 @@ Validating plugin manifest: .../plugins/trace-map/.claude-plugin/plugin.json
 Validating hooks: .../plugins/trace-map/hooks/hooks.json
 
   ❯ ./register.tsx hooks: session.start, session.end, config.set{key=theme}, command.run{command=trace-map}, turn.start, turn.complete, turn.step, tool.call, ui.render{component=Pane, requestId=trace-map}
-  ❯ ./register.tsx calls: $.command.register, $.config.list (via readTheme), $.config.set (via setDisguise), $.session.id, $.store.delete, $.store.get, $.store.set (via changed, setDisguise), $.ui.invalidate, $.ui.open, $.ui.resolve
+  ❯ ./register.tsx calls: $.command.register, $.config.list (via readTheme), $.session.id, $.store.delete, $.store.get, $.store.set (via changed, setDisguise), $.ui.invalidate, $.ui.open, $.ui.resolve
 
 ✔ Validation passed
 ```
@@ -130,7 +130,7 @@ claude plugin validate ./plugins/trace-map
 claude plugin test ./plugins/trace-map
 ```
 
-There are 15 tests in `hooks/register.test.ts`. One of them checks that no prompt or reasoning text reaches the store. The files:
+There are 18 tests in `hooks/register.test.ts`. One of them checks that no prompt or reasoning text reaches the store. The files:
 
 ```text
 .claude-plugin/plugin.json   manifest, with the `disguise` userConfig option
@@ -139,7 +139,7 @@ hooks/register.tsx           the hooks and the drawing
 hooks/disguise.ts            the phrases and how calls are classified
 hooks/register.test.ts       tests
 types/index.d.ts             shared types
-docs/                        the screenshot and a sound design brief in Ukrainian
+docs/                        a sound design brief in Ukrainian
 PRIVACY.md                   what the mod reads, stores and sends
 ```
 
@@ -147,6 +147,7 @@ Claude Code generates the `.claude-plugin/types/` folder with the mods API types
 
 ## Versions
 
+- **0.3.4**: the phrases button keeps its choice in the mod's own store and no longer writes Claude Code's settings; a later change in `/config` wins over it. The screenshot moved out of the plugin folder.
 - **0.3.3**: a local variable no longer reuses the name of the JSX factory, so the directory's scanner can read the mod.
 - **0.3.2**: a listing icon, and the README says which setting the mod changes.
 - **0.3.1**: the text of commands is no longer stored. The honest line keeps it in memory only.

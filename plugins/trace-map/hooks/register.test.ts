@@ -1,3 +1,4 @@
+import type { On } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 
 import { PHRASES, anyPhrase, kindOf, phraseOf } from './disguise'
@@ -284,6 +285,58 @@ test('the pane has its own switch: ✕ turns the chores off, ✓ turns them back
     if (surface === 'terminal') expect(await ui.find({ type: 'Text', text: anyPhrase('git') })).toBeDefined()
     await ui.unmount()
   }
+})
+
+/** Answers what session.start asks of the engine, so the test can start a session. */
+function stubSession(on: On): void {
+  on('session.start', async (_, e) => ({ cwd: e.cwd }))
+  on('command.register', async (_, e) => ({ value: { command: e.name } }))
+  on('config.list', async () => ({ value: [] }))
+  on('session.id', async () => ({ value: 'test-session' }))
+  on('ui.open', async () => ({ value: { isPlaced: true } }))
+}
+
+const START = { cwd: 'C:/proj', surface: 'terminal', isInteractive: true } as const
+
+test('the button keeps its choice in the plugin store, never in settings', async ($, on) => {
+  mock.store(on)
+  on('tool.call', async () => OK)
+  const settings: string[] = []
+  on('config.set', async (_, e, next) => {
+    settings.push(e.key)
+    return next(e)
+  })
+
+  const ui = await $.ui.mount({ plugin: 'trace-map', surface: 'terminal', ...PANE })
+  await ui.press({ key: 'disguise' })
+  await ui.press({ key: 'disguise' })
+  expect(settings).toHaveLength(0)
+  await ui.unmount()
+})
+
+test('a choice the button made comes back with the next session', async ($, on) => {
+  mock.store(on, { 'trace-map:disguise': { isOn: false, configured: true } })
+  stubSession(on)
+  on('tool.call', async () => OK)
+
+  await $.session.start(START)
+  const ui = await $.ui.mount({ plugin: 'trace-map', surface: 'terminal', ...PANE })
+  await $.tool.call({ tool: 'Bash', tool_use_id: 'b1', command: 'git status --short' })
+  expect(await ui.find({ type: 'Text', text: /^✓ Bash$/ })).toBeDefined()
+  await ui.unmount()
+})
+
+test('the /config option changed after the button wins', { options: { disguise: false } }, async ($, on) => {
+  // The button turned the chores on while the option was on; the option is now off
+  mock.store(on, { 'trace-map:disguise': { isOn: true, configured: true } })
+  stubSession(on)
+  on('tool.call', async () => OK)
+
+  await $.session.start(START)
+  const ui = await $.ui.mount({ plugin: 'trace-map', surface: 'terminal', ...PANE })
+  await $.tool.call({ tool: 'Bash', tool_use_id: 'b1', command: 'git status --short' })
+  expect(await ui.find({ type: 'Text', text: /^✓ Bash$/ })).toBeDefined()
+  await ui.unmount()
 })
 
 test('/trace-map honest and /trace-map disguise flip the line', async ($, on) => {

@@ -7,10 +7,22 @@ const PANE = 'trace-map'
 
 // The `disguise` option of plugin.json: the last tool shown as a homely chore
 // ("нарізаю сир") instead of the raw command. Off, the honest line is drawn.
-// The pane's button and `/trace-map honest|disguise` flip it: through the
-// /config row when the host lets a plugin set its own row, else in $.store.
+// The pane's button and `/trace-map honest|disguise` flip it and keep the
+// choice in the plugin's own store, never in Claude Code's settings. The
+// choice remembers the option it was made against, so a later change of the
+// option in /config wins over it.
 let disguise = true
+let configured = true
 const DISGUISE_KEY = 'trace-map:disguise'
+
+/** The button's choice, and the /config option it was made against. */
+type Kept = { isOn: boolean; configured: boolean }
+
+function isKept(value: unknown): value is Kept {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  return typeof v.isOn === 'boolean' && typeof v.configured === 'boolean'
+}
 
 // $.store is shared by every session on the machine, so each session saves
 // under its own key: a new session starts clean, a hot reload within one
@@ -89,26 +101,20 @@ async function changed($: EngineInterface): Promise<void> {
   await $.store.set(storeKey, toSave())
 }
 
-/**
- * Flips the disguise and keeps the choice: through the plugin's own /config
- * row, so the menu and the pane agree and the module reloads with the new
- * option; where the host refuses that, in $.store, read back on load.
- */
+/** Flips the disguise and keeps the choice in the plugin's store, read back on load. */
 async function setDisguise($: EngineInterface, isOn: boolean): Promise<void> {
   disguise = isOn
   await $.store.set(storeKey, toSave())
-  try {
-    const set = await $.config.set({ key: 'trace-map.disguise', value: isOn })
-    if (set.deny === undefined) {
-      await $.store.delete(DISGUISE_KEY)
-      $.ui.invalidate('ui.render')
-      return
-    }
-  } catch {
-    // The host has no such row: the store keeps the choice
-  }
-  await $.store.set(DISGUISE_KEY, isOn)
+  const kept: Kept = { isOn, configured }
+  await $.store.set(DISGUISE_KEY, kept)
   $.ui.invalidate('ui.render')
+}
+
+/** Loads the button's choice, unless the /config option changed since it was made. */
+async function loadDisguise($: EngineInterface): Promise<void> {
+  const kept = await $.store.get(DISGUISE_KEY)
+  if (isKept(kept) && kept.configured === configured) disguise = kept.isOn
+  else if (kept !== undefined) await $.store.delete(DISGUISE_KEY)
 }
 
 /** Reads the theme row of /config: light themes start with `light`. */
@@ -601,7 +607,8 @@ function svg(W: number, H: number): string {
 }
 
 export const register: Register = (on, options) => {
-  disguise = options.disguise !== false
+  configured = options.disguise !== false
+  disguise = configured
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -621,9 +628,7 @@ export const register: Register = (on, options) => {
       lastTool = saved.lastTool ?? null
       phase = saved.phase ?? 'idle'
     }
-    // A choice the pane's button kept in the store, where the host has no /config row to keep it
-    const kept = await $.store.get(DISGUISE_KEY)
-    if (typeof kept === 'boolean') disguise = kept
+    await loadDisguise($)
     void $.ui.open({ id: PANE, title: 'Trace map' })
     return next(e)
   })
